@@ -22,6 +22,17 @@ def load_data():
             db_data[table] = db_cursor.fetchall()
 
 
+def get_data_by_field(table: str, field: str, value: str):
+    if table not in db_data:
+        return None
+    
+    for item in db_data[table]:
+        if item[field] == value:
+            return item
+    
+    return None
+
+
 class AuthDialog(QDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -39,17 +50,18 @@ class AuthDialog(QDialog):
         if not login or not password:
             return
 
-        for u in db_data['user']:
-            if u['login'] == login and u['password'] == password:
+        user = get_data_by_field('user', 'login', login)
+
+        if user is not None:
+            if password == user['password']:
                 global current_user
-                current_user = u
+                current_user = user
 
                 main_window.show()
-                self.accept()
                 
-                return
+                return self.accept()
         
-        if register == True:
+        elif register == True:
             with db_connect.cursor() as db_cursor:
                 db_cursor.execute('insert into `user` (`login`, `password`) values (%s,%s)', (login, password))
             
